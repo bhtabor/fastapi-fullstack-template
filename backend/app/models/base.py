@@ -28,5 +28,9 @@ class SoftDeleteMixin(MappedAsDataclass):
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
 
-class BaseModel(Base, IDMixin, TimestampMixin, SoftDeleteMixin):
+class BaseModel(Base, IDMixin, TimestampMixin):
+    __abstract__ = True
+
+
+class SoftDeleteModel(BaseModel, SoftDeleteMixin):
     __abstract__ = True

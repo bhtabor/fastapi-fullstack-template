@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import BaseModel
+from .base import SoftDeleteModel
 
 if TYPE_CHECKING:
     from .item import Item
 
 
-class User(BaseModel):
+class User(SoftDeleteModel):
     __tablename__ = "user"
 
     name: Mapped[str | None] = mapped_column(String(30), kw_only=True)

@@ -106,7 +106,7 @@ async def test_delete_user(client: AsyncClient, db):
     response = await client.delete(f"/api/v1/users/{user.id}", headers=headers)
     assert response.status_code == 200
 
-    # Verify deleted
+    # Verify it's soft deleted
     stmt = select(User).where(User.id == user.id)
     result = await db.execute(stmt)
     db_user = result.scalar_one_or_none()
