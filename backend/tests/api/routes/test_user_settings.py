@@ -2,7 +2,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.core.security import verify_password
-from app.crud.users import crud_users
+from app.repo.users import users_repo
 from app.schemas.users import UserCreate
 
 
@@ -19,7 +19,7 @@ async def test_user_change_password_success(client: AsyncClient, db):
     email = "changepassword@example.com"
     password = "OldPassword123!"
     user_in = UserCreate(email=email, password=password, name="Test User", username="changepass")
-    user = await crud_users.create(db, user_in)
+    user = await users_repo.create(db, user_in)
 
     # Login to get token
     login_data = {"username": email, "password": password}
@@ -53,7 +53,7 @@ async def test_user_change_password_wrong_current(client: AsyncClient, db):
     email = "wrongcurrent@example.com"
     password = "Password123!"
     user_in = UserCreate(email=email, password=password, name="Test User", username="wrongcurrent")
-    await crud_users.create(db, user_in)
+    await users_repo.create(db, user_in)
 
     # Login
     r_login = await client.post("/api/v1/login/access-token", data={"username": email, "password": password})
@@ -76,7 +76,7 @@ async def test_user_change_password_same_password(client: AsyncClient, db):
     email = "samepass@example.com"
     password = "Password123!"
     user_in = UserCreate(email=email, password=password, name="Test User", username="samepass")
-    await crud_users.create(db, user_in)
+    await users_repo.create(db, user_in)
 
     # Login
     r_login = await client.post("/api/v1/login/access-token", data={"username": email, "password": password})
@@ -97,7 +97,7 @@ async def test_delete_user_me(client: AsyncClient, db):
     email = "deleteme@example.com"
     password = "Password123!"
     user_in = UserCreate(email=email, password=password, name="Tmp User", username="deleteme")
-    user = await crud_users.create(db, user_in)
+    user = await users_repo.create(db, user_in)
     user_id = user.id
 
     # Login
@@ -113,7 +113,7 @@ async def test_delete_user_me(client: AsyncClient, db):
     # Verify user is gone
     # Verify user is marked deleted
     # Pass is_deleted=True to bypass the default exclude_deleted filter
-    user_in_db = await crud_users.get(db, id=user_id, is_deleted=True)
+    user_in_db = await users_repo.get(db, id=user_id, is_deleted=True)
     assert user_in_db is not None
     assert user_in_db.is_deleted is True
     assert user_in_db.deleted_at is not None

@@ -76,20 +76,20 @@ core/
     queue.py        # ARQ job queue pool
     rate_limit.py   # Redis-based rate limiting
 models/
-  base.py           # BaseModel with IDMixin, TimestampMixin, SoftDeleteMixin
+  base.py           # BaseModel with IDMixin, TimestampMixin; SoftDeleteModel with SoftDeleteMixin
   user.py, item.py  # SQLAlchemy ORM models
 schemas/            # Pydantic schemas (separate Create/Update/Read per resource)
-crud/
-  base.py           # Generic BaseCRUD[ModelType] with get/get_multi/create/update/delete
+repo/
+  base.py           # Generic BaseRepo[BaseModelType] + SoftDeleteRepo[SoftDeleteModelType]
   users.py, items.py
 tasks/              # ARQ async background task definitions
 commands/           # CLI scripts (e.g., create_first_superuser.py)
 migrations/         # Alembic migrations
 ```
 
-**Key pattern — BaseCRUD**: All resources use the generic `BaseCRUD[ModelType]` from `crud/base.py`. It provides `get()`, `get_multi()`, `create()`, `update()`, `delete()` (soft), `db_delete()` (hard), `exists()`, `count()`. Both `get` and `get_multi` accept SQLAlchemy loading options for eager loading.
+**Key pattern — BaseRepo**: Resources without soft delete use `BaseRepo[BaseModelType]` from `repo/base.py`. Resources with soft delete use `SoftDeleteRepo[SoftDeleteModelType]`. Both provide `get()`, `get_multi()`, `create()`, `update()`, `db_delete()` (hard), `exists()`, `count()`. `SoftDeleteRepo` additionally provides `delete()` (soft) and auto-filters `is_deleted=False`. Both `get` and `get_multi` accept SQLAlchemy loading options for eager loading.
 
-**Soft deletes**: Models using `SoftDeleteMixin` set `is_deleted=True` and `deleted_at` on delete rather than removing rows.
+**Soft deletes**: Models using `SoftDeleteModel` set `is_deleted=True` and `deleted_at` on delete rather than removing rows. Use `SoftDeleteRepo` for soft-deletable models.
 
 ### Frontend Structure (`frontend/src/`)
 

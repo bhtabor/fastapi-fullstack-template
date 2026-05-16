@@ -3,11 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.item import Item
 from app.schemas.items import ItemCreate, ItemUpdate
 
-from .base import BaseCRUD
+from .base import BaseRepo
 
 
-class CRUDItem(BaseCRUD[Item]):
-    """CRUD operations for Item model."""
+class ItemRepo(BaseRepo[Item]):
+    """Repo operations for Item model."""
 
     async def create(
         self,
@@ -72,4 +72,4 @@ class CRUDItem(BaseCRUD[Item]):
         return db_item
 
 
-crud_items = CRUDItem(Item)
+items_repo = ItemRepo(Item)

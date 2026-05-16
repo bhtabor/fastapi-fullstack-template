@@ -15,7 +15,7 @@ from app.core.security import (
     create_refresh_token,
     verify_token,
 )
-from app.crud import crud_users
+from app.repo import users_repo
 from app.schemas.auth import Token
 
 router = APIRouter(prefix="/login", tags=["login"])
@@ -27,7 +27,7 @@ async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(async_get_db)],
 ) -> dict[str, str]:
-    user = await crud_users.authenticate(db=db, username_or_email=form_data.username, password=form_data.password)
+    user = await users_repo.authenticate(db=db, username_or_email=form_data.username, password=form_data.password)
     if not user:
         raise UnauthorizedException("Wrong username, email or password.")
     if not user.is_active:
@@ -65,9 +65,9 @@ async def refresh_access_token(
 
     # Look up user to verify token_version hasn't been incremented (e.g., after logout)
     if "@" in token_data.username_or_email:
-        user = await crud_users.get_by_email(db=db, email=token_data.username_or_email, is_deleted=False)
+        user = await users_repo.get_by_email(db=db, email=token_data.username_or_email, is_deleted=False)
     else:
-        user = await crud_users.get_by_username(db=db, username=token_data.username_or_email, is_deleted=False)
+        user = await users_repo.get_by_username(db=db, username=token_data.username_or_email, is_deleted=False)
 
     if not user or user.token_version != token_data.token_version:
         raise UnauthorizedException("Token has been revoked.")

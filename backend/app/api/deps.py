@@ -8,8 +8,8 @@ from app.core.db import async_get_db
 from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.core.logger import logging
 from app.core.security import TokenType, verify_token
-from app.crud import crud_users
 from app.models.user import User
+from app.repo import users_repo
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +35,9 @@ async def get_current_user(
         raise UnauthorizedException("User not authenticated.")
 
     if "@" in token_data.username_or_email:
-        user = await crud_users.get_by_email(db=db, email=token_data.username_or_email, is_deleted=False)
+        user = await users_repo.get_by_email(db=db, email=token_data.username_or_email, is_deleted=False)
     else:
-        user = await crud_users.get_by_username(db=db, username=token_data.username_or_email, is_deleted=False)
+        user = await users_repo.get_by_username(db=db, username=token_data.username_or_email, is_deleted=False)
 
     if not user:
         raise UnauthorizedException("User not found.")
@@ -78,9 +78,9 @@ async def get_optional_user(request: Request, db: SessionDep) -> User | None:
             return None
 
         if "@" in token_data.username_or_email:
-            user = await crud_users.get_by_email(db=db, email=token_data.username_or_email, is_deleted=False)
+            user = await users_repo.get_by_email(db=db, email=token_data.username_or_email, is_deleted=False)
         else:
-            user = await crud_users.get_by_username(db=db, username=token_data.username_or_email, is_deleted=False)
+            user = await users_repo.get_by_username(db=db, username=token_data.username_or_email, is_deleted=False)
 
         if not user or not user.is_active or user.token_version != token_data.token_version:
             return None

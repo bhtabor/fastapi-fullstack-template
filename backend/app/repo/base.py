@@ -12,11 +12,11 @@ BaseModelType = TypeVar("BaseModelType", bound=BaseModel)
 SoftDeleteModelType = TypeVar("SoftDeleteModelType", bound=SoftDeleteModel)
 
 
-class BaseCRUD(Generic[BaseModelType]):
-    """Base class for CRUD operations on SQLAlchemy models.
+class BaseRepo(Generic[BaseModelType]):
+    """Base class for repo operations on SQLAlchemy models.
 
     Provides common database operations that can be inherited by
-    model-specific CRUD classes.
+    model-specific repo classes.
 
     Requirements
     ------------
@@ -30,31 +30,31 @@ class BaseCRUD(Generic[BaseModelType]):
     If you have a model that should NOT inherit from BaseModel:
 
     1. **Option A**: Inherit from BaseModel anyway (unused fields are okay)
-    2. **Option B**: Create a custom CRUD class without extending BaseCRUD
+    2. **Option B**: Create a custom repo class without extending BaseRepo
 
     Type Parameters
     ---------------
     BaseModelType : BaseModel
-        The SQLAlchemy model type this CRUD instance operates on.
+        The SQLAlchemy model type this repo instance operates on.
         Must inherit from `app.models.base.BaseModel`.
 
     Examples
     --------
-    Create a CRUD instance for your model:
+    Create a repo instance for your model:
 
     >>> from app.models.item import Item
-    >>> from app.crud.base import BaseCRUD
+    >>> from app.repo.base import BaseRepo
     >>>
-    >>> class CRUDItem(BaseCRUD[Item]):
+    >>> class ItemRepo(BaseRepo[Item]):
     >>>     async def create(self, db, item_create):
     >>>         # Custom create logic here
     >>>         pass
     >>>
-    >>> crud_items = CRUDItem(Item)
+    >>> items_repo = ItemRepo(Item)
     """
 
     def __init__(self, model: type[BaseModelType]):
-        """Initialize the CRUD instance with a model.
+        """Initialize the repo instance with a model.
 
         Parameters
         ----------
@@ -247,10 +247,10 @@ class BaseCRUD(Generic[BaseModelType]):
         return True
 
 
-class SoftDeleteCRUD(BaseCRUD[SoftDeleteModelType]):
-    """Base class for CRUD operations on soft-deletable SQLAlchemy models.
+class SoftDeleteRepo(BaseRepo[SoftDeleteModelType]):
+    """Base class for repo operations on soft-deletable SQLAlchemy models.
 
-    Extends :class:`BaseCRUD` with soft-delete capabilities (exclude_deleted
+    Extends :class:`BaseRepo` with soft-delete capabilities (exclude_deleted
     filtering, soft delete method).
 
     Requirements
@@ -261,19 +261,19 @@ class SoftDeleteCRUD(BaseCRUD[SoftDeleteModelType]):
     Type Parameters
     ---------------
     SoftDeleteModelType : SoftDeleteModel
-        The SQLAlchemy model type this CRUD instance operates on.
+        The SQLAlchemy model type this repo instance operates on.
         Must inherit from ``app.models.base.SoftDeleteModel``.
 
     Examples
     --------
     >>> from app.models.user import User
-    >>> from app.crud.base import SoftDeleteCRUD
+    >>> from app.repo.base import SoftDeleteRepo
     >>>
-    >>> class CRUDUser(SoftDeleteCRUD[User]):
+    >>> class UserRepo(SoftDeleteRepo[User]):
     >>>     async def create(self, db, user_create):
     >>>         pass
     >>>
-    >>> crud_users = CRUDUser(User)
+    >>> users_repo = UserRepo(User)
     """
 
     exclude_deleted: bool = True
@@ -317,7 +317,7 @@ class SoftDeleteCRUD(BaseCRUD[SoftDeleteModelType]):
         Notes
         -----
         This is a "soft delete" — the record remains in the database
-        but is marked as deleted. Use :meth:`BaseCRUD.db_delete` for
+        but is marked as deleted. Use :meth:`BaseRepo.db_delete` for
         permanent removal.
 
         Examples

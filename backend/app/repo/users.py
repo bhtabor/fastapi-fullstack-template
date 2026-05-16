@@ -7,13 +7,13 @@ from app.core.security import get_password_hash, verify_password
 from app.models.user import User
 from app.schemas.users import UserCreate, UserUpdate
 
-from .base import SoftDeleteCRUD
+from .base import SoftDeleteRepo
 
 logger = logging.getLogger(__name__)
 
 
-class CRUDUser(SoftDeleteCRUD[User]):
-    """CRUD operations for User model with authentication logic."""
+class UserRepo(SoftDeleteRepo[User]):
+    """Repo operations for User model with authentication logic."""
 
     async def get_by_email(
         self,
@@ -180,4 +180,4 @@ class CRUDUser(SoftDeleteCRUD[User]):
         return user
 
 
-crud_users = CRUDUser(User)
+users_repo = UserRepo(User)

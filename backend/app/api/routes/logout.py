@@ -4,7 +4,7 @@ from fastapi import APIRouter, Cookie, Response
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.exceptions import UnauthorizedException
-from app.crud import crud_users
+from app.repo import users_repo
 
 router = APIRouter(tags=["login"])
 
@@ -21,7 +21,7 @@ async def logout(
         raise UnauthorizedException("Refresh token not found")
 
     # Incrementing token_version makes all currently issued tokens invalid
-    await crud_users.increment_token_version(db=db, user=current_user)
+    await users_repo.increment_token_version(db=db, user=current_user)
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="refresh_token")
 
