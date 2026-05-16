@@ -152,12 +152,11 @@ async def test_delete_item(client: AsyncClient, normal_user_token_headers, db):
     assert response.status_code == 200
     assert "message" in response.json()
 
-    # Verify it's soft deleted
+    # Verify it's hard deleted
     stmt = select(Item).where(Item.id == item_id)
     result = await db.execute(stmt)
     db_item = result.scalar_one_or_none()
-    assert db_item is not None
-    assert db_item.is_deleted is True
+    assert db_item is None
 
 
 @pytest.mark.asyncio

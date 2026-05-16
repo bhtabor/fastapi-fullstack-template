@@ -103,5 +103,5 @@ async def delete_item(
     if not current_user.is_superuser and (item.owner_id != current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
-    await crud_items.delete(db=session, id=id)
+    await crud_items.db_delete(db=session, id=id)
     return Message(message="Item deleted successfully")
