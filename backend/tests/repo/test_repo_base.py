@@ -89,3 +89,15 @@ async def test_crud_db_delete(db):
     # Check it is hard deleted
     fetched_user = await users_repo.get(db, id=user.id)
     assert fetched_user is None
+
+
+@pytest.mark.asyncio
+async def test_crud_db_delete_soft_deleted(db):
+    user = await create_user(db)
+    await users_repo.delete(db, id=user.id)
+
+    deleted = await users_repo.db_delete(db, id=user.id)
+    assert deleted is True
+
+    fetched_user = await users_repo.get(db, id=user.id, is_deleted=True)
+    assert fetched_user is None

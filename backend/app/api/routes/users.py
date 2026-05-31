@@ -206,9 +206,7 @@ async def erase_db_user(
     db: SessionDep,
 ) -> dict[str, str]:
     """Permanently delete a user from the database (Superuser only)."""
-    user_exists = await users_repo.exists(db=db, username=username)
-    if not user_exists:
+    deleted = await users_repo.db_delete(db=db, username=username)
+    if not deleted:
         raise NotFoundException("User not found")
-
-    await users_repo.db_delete(db=db, username=username)
     return {"message": "User deleted from the database"}

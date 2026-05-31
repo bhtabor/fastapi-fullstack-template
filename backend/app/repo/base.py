@@ -334,3 +334,16 @@ class SoftDeleteRepo(BaseRepo[SoftDeleteModelType]):
         await db.commit()
         await db.refresh(record)
         return True
+
+    async def db_delete(
+        self,
+        db: AsyncSession,
+        **kwargs: Any,
+    ) -> bool:
+        """Hard delete a record (removes from database).
+
+        Ignores soft-delete filter — finds and deletes records regardless
+        of ``is_deleted`` status.
+        """
+        base_repo = BaseRepo(self.model)
+        return await base_repo.db_delete(db=db, **kwargs)
