@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Response
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUserDep, DatabaseSessionDep
 from app.core.exceptions import UnauthorizedException
 from app.repo import users_repo
 
@@ -12,8 +12,8 @@ router = APIRouter(tags=["login"])
 @router.post("/logout", operation_id="logout")
 async def logout(
     response: Response,
-    db: SessionDep,
-    current_user: CurrentUser,
+    db: DatabaseSessionDep,
+    current_user: CurrentUserDep,
     refresh_token: Annotated[str | None, Cookie(alias="refresh_token")] = None,
 ) -> dict[str, str]:
     """Logout user and invalidate all outstanding tokens."""

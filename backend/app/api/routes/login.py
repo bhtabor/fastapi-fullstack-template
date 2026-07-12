@@ -3,10 +3,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import DatabaseSessionDep
 from app.core.config import settings
-from app.core.db import async_get_db
 from app.core.exceptions import UnauthorizedException
 from app.core.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -25,7 +24,7 @@ router = APIRouter(prefix="/login", tags=["login"])
 async def login_for_access_token(
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    db: Annotated[AsyncSession, Depends(async_get_db)],
+    db: DatabaseSessionDep,
 ) -> dict[str, str]:
     user = await users_repo.authenticate(db=db, username_or_email=form_data.username, password=form_data.password)
     if not user:
@@ -52,9 +51,7 @@ async def login_for_access_token(
 
 
 @router.post("/refresh", operation_id="refresh_access_token")
-async def refresh_access_token(
-    request: Request, response: Response, db: AsyncSession = Depends(async_get_db)
-) -> dict[str, str]:
+async def refresh_access_token(request: Request, response: Response, db: DatabaseSessionDep) -> dict[str, str]:
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
         raise UnauthorizedException("Refresh token missing.")

@@ -3,7 +3,7 @@ from typing import Any
 from arq.jobs import Job as ArqJob
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import CurrentUser
+from app.api.deps import CurrentUserDep
 from app.core.utils import queue
 from app.core.utils.rate_limit import RateLimit
 from app.schemas.job import Job
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 @router.post("/task", response_model=Job, status_code=201, dependencies=[Depends(RateLimit(limit=10, period=60))])
 async def create_task(
     message: str,
-    current_user: CurrentUser,
+    current_user: CurrentUserDep,
 ) -> dict[str, str]:
     """Create a new background task."""
     if queue.pool is None:
@@ -30,7 +30,7 @@ async def create_task(
 @router.get("/task/{task_id}")
 async def get_task(
     task_id: str,
-    current_user: CurrentUser,
+    current_user: CurrentUserDep,
 ) -> dict[str, Any] | None:
     """Get information about a specific background task."""
     if queue.pool is None:

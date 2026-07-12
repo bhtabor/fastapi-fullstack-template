@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
-from app.api.deps import SessionDep
+from app.api.deps import DatabaseSessionDep
 from app.core.config import settings
 from app.core.health import check_database_health
 from app.schemas.health import HealthCheck, ReadyCheck
@@ -31,7 +31,7 @@ async def health() -> JSONResponse:
 
 @router.get("/ready", response_model=ReadyCheck)
 async def ready(
-    db: SessionDep,
+    db: DatabaseSessionDep,
 ) -> JSONResponse:
     """Readiness check to verify external dependencies (DB) are available."""
     database_status = await check_database_health(db=db)

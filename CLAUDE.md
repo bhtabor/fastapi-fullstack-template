@@ -63,7 +63,7 @@ This is a fullstack boilerplate: async FastAPI backend + React frontend, connect
 ```
 api/
   __init__.py       # Aggregates all routers under /api prefix
-  deps.py           # Shared dependencies: SessionDep, CurrentUser, RedisDep
+  deps.py           # Shared dependencies: DatabaseSessionDep, CurrentUserDep, RedisDep
   routes/           # Versioned endpoints under /api/v1/
 core/
   config.py         # All settings (Pydantic BaseSettings, reads from .env)

@@ -3,7 +3,7 @@ import re
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
-from app.api.deps import CurrentUser, SessionDep, SuperUserDep
+from app.api.deps import CurrentSuperUserDep, CurrentUserDep, DatabaseSessionDep
 from app.core.exceptions import DuplicateValueException, ForbiddenException, NotFoundException
 from app.core.security import get_password_hash, verify_password
 from app.repo import users_repo
@@ -21,8 +21,8 @@ class PaginatedResponse(BaseModel):
 async def write_user(
     request: Request,
     user: UserCreate,
-    current_user: SuperUserDep,
-    db: SessionDep,
+    current_user: CurrentSuperUserDep,
+    db: DatabaseSessionDep,
 ) -> UserRead:
     """Create a new user with generated username if missing (Superuser only)."""
     email_exists = await users_repo.exists(db=db, email=user.email)
@@ -49,7 +49,7 @@ async def write_user(
 
 @router.get("/", response_model=PaginatedResponse, operation_id="read_users")
 async def read_users(
-    db: SessionDep,
+    db: DatabaseSessionDep,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=100),
 ) -> PaginatedResponse:
@@ -70,7 +70,7 @@ async def read_users(
 
 
 @router.get("/me", response_model=UserRead, operation_id="read_user_me")
-async def read_users_me(current_user: CurrentUser) -> UserRead:
+async def read_users_me(current_user: CurrentUserDep) -> UserRead:
     """Get current user information."""
     return UserRead.model_validate(current_user)
 
@@ -78,8 +78,8 @@ async def read_users_me(current_user: CurrentUser) -> UserRead:
 @router.patch("/me", response_model=UserRead, operation_id="update_user_me")
 async def update_user_me(
     values: UserUpdate,
-    current_user: CurrentUser,
-    db: SessionDep,
+    current_user: CurrentUserDep,
+    db: DatabaseSessionDep,
 ) -> UserRead:
     """Update current user profile."""
     db_user = await users_repo.get(db=db, id=current_user.id)
@@ -106,8 +106,8 @@ async def update_user_me(
 @router.patch("/me/password", response_model=dict[str, str], operation_id="update_password_me")
 async def update_password_me(
     body: UpdatePassword,
-    current_user: CurrentUser,
-    db: SessionDep,
+    current_user: CurrentUserDep,
+    db: DatabaseSessionDep,
 ) -> dict[str, str]:
     """Update current user password."""
     if not await verify_password(body.current_password, current_user.hashed_password):
@@ -123,8 +123,8 @@ async def update_password_me(
 
 @router.delete("/me", response_model=dict[str, str], operation_id="delete_user_me")
 async def delete_user_me(
-    current_user: CurrentUser,
-    db: SessionDep,
+    current_user: CurrentUserDep,
+    db: DatabaseSessionDep,
 ) -> dict[str, str]:
     """Delete own user account."""
     if current_user.is_superuser:
@@ -139,7 +139,7 @@ async def delete_user_me(
 @router.get("/{user_id}", response_model=UserRead, operation_id="read_user_by_id")
 async def read_user_by_id(
     user_id: int,
-    db: SessionDep,
+    db: DatabaseSessionDep,
 ) -> UserRead:
     """Get a specific user by ID."""
     db_user = await users_repo.get(db=db, id=user_id)
@@ -153,8 +153,8 @@ async def read_user_by_id(
 async def patch_user(
     values: UserUpdate,
     user_id: int,
-    current_user: CurrentUser,
-    db: SessionDep,
+    current_user: CurrentUserDep,
+    db: DatabaseSessionDep,
 ) -> UserRead:
     """Update a specific user profile (Self or Superuser)."""
     db_user = await users_repo.get(db=db, id=user_id)
@@ -184,8 +184,8 @@ async def patch_user(
 @router.delete("/{user_id}", operation_id="delete_user")
 async def erase_user(
     user_id: int,
-    current_user: CurrentUser,
-    db: SessionDep,
+    current_user: CurrentUserDep,
+    db: DatabaseSessionDep,
 ) -> dict[str, str]:
     """Delete a user profile (Self or Superuser)."""
     db_user = await users_repo.get(db=db, id=user_id)
@@ -202,8 +202,8 @@ async def erase_user(
 @router.delete("/db_user/{username}", operation_id="delete_db_user")
 async def erase_db_user(
     username: str,
-    current_user: SuperUserDep,
-    db: SessionDep,
+    current_user: CurrentSuperUserDep,
+    db: DatabaseSessionDep,
 ) -> dict[str, str]:
     """Permanently delete a user from the database (Superuser only)."""
     deleted = await users_repo.db_delete(db=db, username=username)

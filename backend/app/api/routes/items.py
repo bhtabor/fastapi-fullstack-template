@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUserDep, DatabaseSessionDep
 from app.repo.items import items_repo
 from app.schemas.common import Message
 from app.schemas.items import ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
@@ -12,8 +12,8 @@ router = APIRouter(prefix="/items", tags=["items"])
 
 @router.get("/", response_model=ItemsPublic, operation_id="read_items")
 async def read_items(
-    session: SessionDep,
-    current_user: CurrentUser,
+    db: DatabaseSessionDep,
+    current_user: CurrentUserDep,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=100),
 ) -> Any:
@@ -22,10 +22,10 @@ async def read_items(
     """
     if current_user.is_superuser:
         # Superusers can see all items
-        result = await items_repo.get_multi(db=session, offset=skip, limit=limit)
+        result = await items_repo.get_multi(db=db, offset=skip, limit=limit)
     else:
         # Regular users can only see their own items
-        result = await items_repo.get_multi(db=session, offset=skip, limit=limit, owner_id=current_user.id)
+        result = await items_repo.get_multi(db=db, offset=skip, limit=limit, owner_id=current_user.id)
 
     # Convert SQLAlchemy models to Pydantic models
     items_data = [ItemPublic.model_validate(item) for item in result["data"]]
@@ -34,14 +34,14 @@ async def read_items(
 
 @router.get("/{id}", response_model=ItemPublic, operation_id="read_item")
 async def read_item(
-    session: SessionDep,
-    current_user: CurrentUser,
+    db: DatabaseSessionDep,
+    current_user: CurrentUserDep,
     id: int,
 ) -> Any:
     """
     Get item by ID.
     """
-    item = await items_repo.get(db=session, id=id)
+    item = await items_repo.get(db=db, id=id)
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
 
@@ -54,54 +54,54 @@ async def read_item(
 @router.post("/", response_model=ItemPublic, status_code=status.HTTP_201_CREATED, operation_id="create_item")
 async def create_item(
     *,
-    session: SessionDep,
-    current_user: CurrentUser,
+    db: DatabaseSessionDep,
+    current_user: CurrentUserDep,
     item_in: ItemCreate,
 ) -> Any:
     """
     Create new item.
     """
-    item = await items_repo.create(db=session, item_create=item_in, owner_id=current_user.id)
+    item = await items_repo.create(db=db, item_create=item_in, owner_id=current_user.id)
     return item
 
 
 @router.put("/{id}", response_model=ItemPublic, operation_id="update_item")
 async def update_item(
     *,
-    session: SessionDep,
-    current_user: CurrentUser,
+    db: DatabaseSessionDep,
+    current_user: CurrentUserDep,
     id: int,
     item_in: ItemUpdate,
 ) -> Any:
     """
     Update an item.
     """
-    item = await items_repo.get(db=session, id=id)
+    item = await items_repo.get(db=db, id=id)
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
 
     if not current_user.is_superuser and (item.owner_id != current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
-    item = await items_repo.update(db=session, db_item=item, item_update=item_in)
+    item = await items_repo.update(db=db, db_item=item, item_update=item_in)
     return item
 
 
 @router.delete("/{id}", response_model=Message, operation_id="delete_item")
 async def delete_item(
-    session: SessionDep,
-    current_user: CurrentUser,
+    db: DatabaseSessionDep,
+    current_user: CurrentUserDep,
     id: int,
 ) -> Message:
     """
     Delete an item.
     """
-    item = await items_repo.get(db=session, id=id)
+    item = await items_repo.get(db=db, id=id)
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
 
     if not current_user.is_superuser and (item.owner_id != current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
-    await items_repo.db_delete(db=session, id=id)
+    await items_repo.db_delete(db=db, id=id)
     return Message(message="Item deleted successfully")

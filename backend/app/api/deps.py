@@ -14,7 +14,7 @@ from app.repo import users_repo
 logger = logging.getLogger(__name__)
 
 # --- Dependency Type Aliases for Cleaner Routes ---
-SessionDep = Annotated[AsyncSession, Depends(async_get_db)]
+DatabaseSessionDep = Annotated[AsyncSession, Depends(async_get_db)]
 
 # auto_error=False so missing Bearer doesn't immediately 401 — cookie auth is tried first
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token", auto_error=False)
@@ -22,7 +22,7 @@ _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token", aut
 
 async def get_current_user(
     request: Request,
-    db: SessionDep,
+    db: DatabaseSessionDep,
     bearer_token: Annotated[str | None, Depends(_oauth2_scheme)] = None,
 ) -> User:
     # Prefer httpOnly cookie; fall back to Bearer token (for Swagger UI / API clients)
@@ -51,19 +51,19 @@ async def get_current_user(
     return user
 
 
-CurrentUser = Annotated[User, Depends(get_current_user)]
+CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
-async def get_current_superuser(current_user: CurrentUser) -> User:
+async def get_current_superuser(current_user: CurrentUserDep) -> User:
     if not current_user.is_superuser:
         raise ForbiddenException("You do not have enough privileges.")
     return current_user
 
 
-SuperUserDep = Annotated[User, Depends(get_current_superuser)]
+CurrentSuperUserDep = Annotated[User, Depends(get_current_superuser)]
 
 
-async def get_optional_user(request: Request, db: SessionDep) -> User | None:
+async def get_optional_user(request: Request, db: DatabaseSessionDep) -> User | None:
     token = request.cookies.get("access_token")
     if not token:
         auth = request.headers.get("Authorization", "")
